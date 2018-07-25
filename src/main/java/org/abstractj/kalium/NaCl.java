@@ -23,12 +23,76 @@ import jnr.ffi.annotations.Out;
 import jnr.ffi.byref.LongLongByReference;
 import jnr.ffi.types.u_int64_t;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Collections;
+import java.util.Objects;
+
+import static java.lang.Thread.currentThread;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+
 public class NaCl {
 
+    private static Path searchPath;
+
+    static {
+        try {
+            Path tempDirectory = Files.createTempDirectory("sodium-native-");
+            tempDirectory.toFile().deleteOnExit();
+            if (Platform.getNativePlatform().getCPU() == Platform.CPU.X86_64) {
+                switch (Platform.getNativePlatform().getOS()) {
+                    case WINDOWS:
+                        copyFromJar("/coop/rchain/sodium_native/windows-x86_64", tempDirectory);
+                        searchPath = tempDirectory.resolve("bin");
+                        break;
+                    case LINUX:
+                        copyFromJar("/coop/rchain/sodium_native/linux-x86_64", tempDirectory);
+                        searchPath = tempDirectory.resolve("lib");
+                        break;
+                    case DARWIN:
+                        copyFromJar("/coop/rchain/sodium_native/osx-x86_64", tempDirectory);
+                        searchPath = tempDirectory.resolve("lib");
+                        break;
+                }
+            }
+        } catch (IOException | URISyntaxException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static Sodium sodium() {
-        Sodium sodium = SingletonHolder.SODIUM_INSTANCE;
+        Sodium sodium = SingletonHolder.SODIUM_INSTANCE(searchPath);
         checkVersion(sodium);
         return sodium;
+    }
+
+    private static void copyFromJar(String source, final Path target) throws URISyntaxException, IOException {
+        ClassLoader cl = currentThread().getContextClassLoader();
+        URI resource = Objects.requireNonNull(cl.getResource(source.substring(1))).toURI();
+
+        try (FileSystem fileSystem = FileSystems.newFileSystem(resource, Collections.<String, String>emptyMap())) {
+            final Path jarPath = fileSystem.getPath(source);
+
+            Files.walkFileTree(jarPath, new SimpleFileVisitor<Path>() {
+                private Path currentTarget;
+
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    currentTarget = target.resolve(jarPath.relativize(dir).toString());
+                    Files.createDirectories(currentTarget);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    Files.copy(file, target.resolve(jarPath.relativize(file).toString()), REPLACE_EXISTING);
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        }
     }
 
     private static final String LIBRARY_NAME = libraryName();
@@ -43,13 +107,11 @@ public class NaCl {
     }
 
     private static final class SingletonHolder {
-        public static final Sodium SODIUM_INSTANCE =
-                LibraryLoader.create(Sodium.class)
-                        .search("/usr/local/lib")
-                        .search("/opt/local/lib")
-                        .search("lib")
-                        .load(LIBRARY_NAME);
-
+        static Sodium SODIUM_INSTANCE(Path searchPath) {
+            return LibraryLoader.create(Sodium.class)
+                    .search(searchPath.toAbsolutePath().toString())
+                    .load(LIBRARY_NAME);
+        }
     }
 
     public static final Integer[] MIN_SUPPORTED_VERSION =
