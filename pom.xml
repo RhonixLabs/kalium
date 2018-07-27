@@ -8,7 +8,7 @@
     <packaging>jar</packaging>
 
     <name>kalium</name>
-    <url>http://github.com/abstractj/kalium</url>
+    <url>http://github.com/rchain/kalium</url>
 
     <parent>
         <groupId>org.sonatype.oss</groupId>
@@ -40,10 +40,17 @@
 
     </properties>
 
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
+
     <scm>
-        <connection>scm:git:git@github.com:abstractj/kalium.git</connection>
-        <developerConnection>scm:git:git@github.com:abstractj/kalium.git</developerConnection>
-        <url>https://github.com/abstractj/kalium</url>
+        <connection>scm:git:git@github.com:rchain/kalium.git</connection>
+        <developerConnection>scm:git:git@github.com:rchain/kalium.git</developerConnection>
+        <url>https://github.com/rchain/kalium</url>
         <tag>HEAD</tag>
     </scm>
 
@@ -168,34 +175,6 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-enforcer-plugin</artifactId>
-                <version>${enforcer-plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>enforce-maven</id>
-                        <goals>
-                            <goal>enforce</goal>
-                        </goals>
-                        <configuration>
-                            <rules>
-                                <requireMavenVersion>
-                                    <version>${maven.version}</version>
-                                </requireMavenVersion>
-                            </rules>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <version>${release-plugin.version}</version>
-                <configuration>
-                    <pushChanges>false</pushChanges>
-                </configuration>
-            </plugin>
-            <plugin>
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>3.1.1</version>
                 <executions>
@@ -213,6 +192,33 @@
                                 </includes>
                             </artifactSet>
                         </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- deployment -->
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>1.6.7</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <serverId>ossrh</serverId>
+                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                </configuration>
+            </plugin>
+            <!-- package signing -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>1.5</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
