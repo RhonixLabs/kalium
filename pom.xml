@@ -109,12 +109,6 @@
         </dependency>
         <dependency>
             <groupId>coop.rchain</groupId>
-            <artifactId>sodium-native-windows-x86_64</artifactId>
-            <version>0.1-SNAPSHOT</version>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>coop.rchain</groupId>
             <artifactId>sodium-native-osx-x86_64</artifactId>
             <version>0.1-SNAPSHOT</version>
             <optional>true</optional>
@@ -215,7 +209,6 @@
                             <artifactSet>
                                 <includes>
                                     <include>coop.rchain:sodium-native-linux-x86_64</include>
-                                    <include>coop.rchain:sodium-native-windows-x86_64</include>
                                     <include>coop.rchain:sodium-native-osx-x86_64</include>
                                 </includes>
                             </artifactSet>
