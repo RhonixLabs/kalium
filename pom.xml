@@ -20,7 +20,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- Project dependencies -->
-        <jnr-ffi.version>2.2.1</jnr-ffi.version>
+        <jnr-ffi.version>2.2.2</jnr-ffi.version>
         <junit.version>4.13.1</junit.version>
 
         <!-- Minimum JDK version required -->
